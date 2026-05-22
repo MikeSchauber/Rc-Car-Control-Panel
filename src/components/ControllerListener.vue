@@ -24,10 +24,8 @@ function pollGamepad() {
     const steering = gp.axes[0]   // Linker Stick X
     const throttle = gp.buttons[6]  // R2
 
-    console.log(throttle);
-    
     if (steering && throttle) {
-        sendControl(steering, throttle)
+        sendControl(steering, throttle.value)
     }
 
     // Achsen loggen wenn Bewegung
