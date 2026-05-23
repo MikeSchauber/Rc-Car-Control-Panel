@@ -6,7 +6,7 @@ const logs = ref<string[]>([])
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
 
-const { connected, sendControl } = useGamepadWS('ws://DEINE_PI_IP:8765')
+const { connected, sendControl } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
 function log(msg: string) {
     const time = new Date().toLocaleTimeString('de-DE', { hour12: false })
@@ -14,33 +14,32 @@ function log(msg: string) {
     if (logs.value.length > 50) logs.value.pop()
 }
 
+let lastSend = 0
+const SEND_RATE = 30 // Hz
+
 function pollGamepad() {
-    if (gamepadIndex.value === null) return
+    const now = performance.now()
 
-    const gp = navigator.getGamepads()[gamepadIndex.value]
-    if (!gp) return
+    if (now - lastSend > 1000 / SEND_RATE) {
+        lastSend = now
 
-    // Steuerung an Pi senden
-    const steering = gp.axes[0]   // Linker Stick X
-    const throttle = gp.buttons[6]  // R2
+        const gp = navigator.getGamepads()[gamepadIndex.value!]
+        if (!gp) return
 
-    if (steering && throttle) {
-        sendControl(steering, throttle.value)
+        const steering = gp.axes[0] ?? 0
+        const forward = gp.buttons[7]?.value ?? 0
+        const reverse = gp.buttons[6]?.value ?? 0
+
+        let throttle = 0
+
+        if (reverse > 0.2) {
+            throttle = -reverse
+        } else {
+            throttle = forward
+        }
+
+        sendControl(steering, throttle)
     }
-
-    // Achsen loggen wenn Bewegung
-    gp.axes.forEach((val, i) => {
-        if (Math.abs(val) > 0.1) {
-            log(`Achse ${i}: ${val.toFixed(3)}`)
-        }
-    })
-
-    // Buttons loggen wenn gedrückt
-    gp.buttons.forEach((btn, i) => {
-        if (btn.pressed) {
-            log(`Button ${i} gedrückt (value: ${btn.value.toFixed(2)})`)
-        }
-    })
 
     animationFrameId = requestAnimationFrame(pollGamepad)
 }
