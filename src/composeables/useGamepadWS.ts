@@ -16,7 +16,7 @@ export function useGamepadWS(url: string) {
         ws.value.onclose = () => {
             connected.value = false
             console.log('WebSocket getrennt — reconnect in 2s')
-            setTimeout(connect, 2000) // automatisch neu verbinden
+            setTimeout(connect, 2000)
         }
 
         ws.value.onerror = (e) => console.error('WS Fehler:', e)
@@ -31,8 +31,30 @@ export function useGamepadWS(url: string) {
         }
     }
 
+    function response() {
+        if (ws.value) {
+            const data: any = ws.value.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data)
+                    return data
+                } catch (error) {
+                    console.error('Invalid WS response:', error)
+                }
+
+                // "status": "ok",
+                // "received_throttle": throttle,
+                // "received_steering": steering
+
+                return data
+            }
+            return data
+        }
+
+    }
+
     connect()
     onUnmounted(() => ws.value?.close())
 
-    return { connected, sendControl }
+    return { connected, sendControl, response }
+
 }

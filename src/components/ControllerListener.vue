@@ -6,7 +6,7 @@ const logs = ref<string[]>([])
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
 
-const { connected, sendControl } = useGamepadWS(import.meta.env.VITE_PI_URL)
+const { connected, sendControl, response } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
 function log(msg: string) {
     const time = new Date().toLocaleTimeString('de-DE', { hour12: false })
@@ -39,6 +39,8 @@ function pollGamepad() {
         }
 
         sendControl(steering, throttle)
+
+        console.log(response)
     }
 
     animationFrameId = requestAnimationFrame(pollGamepad)
