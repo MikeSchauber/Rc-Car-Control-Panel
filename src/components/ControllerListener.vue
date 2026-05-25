@@ -6,13 +6,7 @@ const logs = ref<string[]>([])
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
 
-const { connected, sendControl, response } = useGamepadWS(import.meta.env.VITE_PI_URL)
-
-function log(msg: string) {
-    const time = new Date().toLocaleTimeString('de-DE', { hour12: false })
-    logs.value.unshift(`[${time}] ${msg}`)
-    if (logs.value.length > 50) logs.value.pop()
-}
+const { connected, sendControl } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
 let lastSend = 0
 const SEND_RATE = 30 // Hz
@@ -23,12 +17,16 @@ function pollGamepad() {
     if (now - lastSend > 1000 / SEND_RATE) {
         lastSend = now
 
+
         const gp = navigator.getGamepads()[gamepadIndex.value!]
+        console.log(gp)
         if (!gp) return
 
-        const steering = gp.axes[0] ?? 0
-        const forward = gp.buttons[7]?.value ?? 0
-        const reverse = gp.buttons[6]?.value ?? 0
+        const steering = gp.axes[0] ?? 0 // Linker Stick
+        const forward = gp.buttons[7]?.value ?? 0 // R2
+        const reverse = gp.buttons[6]?.value ?? 0 // L2
+
+        console.log(steering)
 
         let throttle = 0
 
@@ -38,24 +36,25 @@ function pollGamepad() {
             throttle = forward
         }
 
+        logs.value.push(`L2 value: ${throttle} | Linker Stick value: ${steering} | R2 value: ${reverse}`)
+
         sendControl(steering, throttle)
-
-        console.log(response)
     }
-
-    animationFrameId = requestAnimationFrame(pollGamepad)
+    animationFrameId = requestAnimationFrame(() => pollGamepad())
 }
 
 onMounted(() => {
     window.addEventListener('gamepadconnected', (e) => {
         gamepadIndex.value = e.gamepad.index
-        log(`✅ Controller verbunden: "${e.gamepad.id}"`)
-        log(`   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`)
-        animationFrameId = requestAnimationFrame(pollGamepad)
+
+        console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
+        // const message = `   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`
+        animationFrameId = requestAnimationFrame(() => pollGamepad())
+        console.log(animationFrameId)
     })
 
     window.addEventListener('gamepaddisconnected', (e) => {
-        log(`❌ Controller getrennt: "${e.gamepad.id}"`)
+        console.log(`❌ Controller getrennt: "${e.gamepad.id}"`)
         gamepadIndex.value = null
         if (animationFrameId) cancelAnimationFrame(animationFrameId)
     })

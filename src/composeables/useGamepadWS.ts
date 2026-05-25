@@ -31,30 +31,30 @@ export function useGamepadWS(url: string) {
         }
     }
 
-    function response() {
-        if (ws.value) {
-            const data: any = ws.value.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data)
-                    return data
-                } catch (error) {
-                    console.error('Invalid WS response:', error)
-                }
+    // function response() {
+    //     if (ws.value) {
+    //         const data: any = ws.value.onmessage = (event) => {
+    //             try {
+    //                 const data = JSON.parse(event.data)
+    //                 return data
+    //             } catch (error) {
+    //                 console.error('Invalid WS response:', error)
+    //             }
 
-                // "status": "ok",
-                // "received_throttle": throttle,
-                // "received_steering": steering
+    //             // "status": "ok",
+    //             // "received_throttle": throttle,
+    //             // "received_steering": steering
 
-                return data
-            }
-            return data
-        }
+    //             return data
+    //         }
+    //         return data
+    //     }
 
-    }
+    // }
 
     connect()
     onUnmounted(() => ws.value?.close())
 
-    return { connected, sendControl, response }
+    return { connected, sendControl }
 
 }

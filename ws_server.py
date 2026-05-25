@@ -15,7 +15,6 @@ async def handler(ws):
 
             print(f"Throttle: {throttle} | Steering: {steering}")
 
-            
 
         except Exception as e:
             print("Error:", e)
