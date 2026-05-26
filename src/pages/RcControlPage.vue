@@ -5,7 +5,7 @@ import { useGamepad } from '@vueuse/core'
 import { computed } from 'vue'
 import { useRcControl } from '@/stores/rcControlStore.ts'
 import Button from '@/components/ui/button/Button.vue'
-import { PanelBottomOpen, PanelTopOpen } from '@lucide/vue'
+import { PanelBottomClose, PanelBottomOpen, PanelTopOpen } from '@lucide/vue'
 
 const rcControlStore = useRcControl()
 
@@ -143,7 +143,7 @@ function addAllEventListeners() {
                 <div class="throttle-buttons">
                     <Button @click="rcControlStore.decreaseMaxThrottle()" id="gamepad-l1"
                         :disabled="maxThrottle === 33">
-                        <PanelTopOpen />
+                   <PanelBottomClose />
                     </Button>
                     <p v-if="maxThrottle === 33" class="low-speed">Low</p>
                     <p v-if="maxThrottle === 66" class="mid-speed">Mid</p>
