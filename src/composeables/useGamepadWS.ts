@@ -35,8 +35,8 @@ export function useGamepadWS(url: string) {
     function sendControl(steering: number, throttle: number) {
         if (ws.value?.readyState === WebSocket.OPEN) {
             ws.value.send(JSON.stringify({
-                steering: parseFloat(steering.toFixed(3)),
-                throttle: parseFloat(throttle.toFixed(3))
+                steering: parseFloat(steering.toFixed(2)),
+                throttle: parseFloat(throttle.toFixed(2))
             }))
         }
     }
