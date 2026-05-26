@@ -2,26 +2,35 @@
 import { useGamepadWS } from '@/composeables/useGamepadWS'
 import { onMounted, onUnmounted, ref } from 'vue'
 import Button from '../ui/button/Button.vue'
-import { mapGamepadToXbox360Controller, useGamepad } from '@vueuse/core'
+import { useGamepad } from '@vueuse/core'
 import { computed } from 'vue'
+import { useRcControl } from '@/stores/rcControlStore.ts'
+
+const rcControlStore = useRcControl()
 
 const sendetLogs = ref<string[]>([])
 const receivedLogs = ref<string[]>([])
-const maxThrottle = ref<number>(100)
+const maxThrottle = ref<number>(0)
 
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
 
-
-
 const { isSupported, gamepads } = useGamepad()
 const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'))
-const controller = mapGamepadToXbox360Controller(gamepad)
 
 const { connected, sendControl, lastMessage } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
 let lastSend = 0
 const SEND_RATE = 30 // Hz
+
+onMounted(() => {
+    addAllEventListeners()
+    maxThrottle.value = rcControlStore.maxThrottle
+})
+
+onUnmounted(() => {
+    if (animationFrameId) cancelAnimationFrame(animationFrameId)
+})
 
 function pollGamepad() {
     const now = performance.now()
@@ -31,6 +40,8 @@ function pollGamepad() {
 
         const gp = navigator.getGamepads()[gamepadIndex.value!]
         if (!gp) return
+
+        buttonEventListener(gp)
 
         let steering = gp.axes[0] ?? 0 // Linker Stick
         const forward = gp.buttons[7]?.value ?? 0 // R2
@@ -44,20 +55,21 @@ function pollGamepad() {
             throttle = forward
         }
 
-        sendetLogs.value.push(`Throttle: ${Math.round(throttle * 100) / 100} || Steering: ${Math.round(steering * 100) / 100}`)
-        scollToBottom()
 
-        if (lastMessage.value) {
-            receivedLogs.value.push(`Throttle: ${lastMessage.value.received_throttle} || Steering: ${lastMessage.value.received_steering}`)
-        }
-
+        logGamepadValues(throttle, steering)
 
         sendControl(steering, throttle)
+
     }
+
     animationFrameId = requestAnimationFrame(() => pollGamepad())
 }
 
-function scollToBottom() {
+function logGamepadValues(throttle: number, steering: number) {
+    sendetLogs.value.push(`Steering: ${Math.round(steering * 100) / 100} || Throttle: ${Math.round(throttle * 100) / 100}`)
+    if (lastMessage.value) {
+        receivedLogs.value.push(`Steering: ${lastMessage.value.received_steering} ||  Throttle: ${lastMessage.value.received_throttle} `)
+    }
     const logContainers = document.querySelectorAll(".log-box")
 
     logContainers.forEach(contaner => {
@@ -67,13 +79,34 @@ function scollToBottom() {
     });
 }
 
-onMounted(() => {
-    addAllEventListeners()
-})
+function buttonEventListener(gp: Gamepad) {
+    buttonLogger(gp)
+    rcControlStore.handleButtonL1(gp)
+    rcControlStore.handleButtonR1(gp)
+    setupReactiveValues()
+}
 
-onUnmounted(() => {
-    if (animationFrameId) cancelAnimationFrame(animationFrameId)
-})
+function buttonLogger(gp: Gamepad) {
+    gp.buttons.forEach((button, index) => {
+        if (button.pressed) {
+            console.log(`Pressed button ${index}`)
+        }
+    })
+}
+
+function setupReactiveValues() {
+    maxThrottle.value = rcControlStore.maxThrottle
+}
+
+function decreaseThrottle() {
+    rcControlStore.decreaseMaxThrottle()
+    maxThrottle.value = rcControlStore.maxThrottle
+}
+
+function increaseThrottle() {
+    rcControlStore.increaseMaxThrottle()
+    maxThrottle.value = rcControlStore.maxThrottle
+}
 
 function addAllEventListeners() {
     window.addEventListener('gamepadconnected', (e) => {
@@ -97,7 +130,7 @@ function addAllEventListeners() {
 
 <template>
     <div class="container">
-        <h1>Gamepad Logger</h1>
+        <h1>RC-Control Webapp</h1>
 
         <div class="status-row">
             <p v-if="gamepadIndex === null" class="hint">
@@ -111,21 +144,18 @@ function addAllEventListeners() {
         </div>
 
         <div class="max-throttle-control">
-
-            <Button id="gamepad-l1" :disabled="maxThrottle === 33">
-                L1
-            </Button>
-            <p :class="maxThrottle === 33
-                ? 'low-speed'
-                : maxThrottle === 66
-                    ? 'mid-speed'
-                    : maxThrottle === 100
-                        ? 'high-speed'
-                        : ''
-                "> {{ maxThrottle }}% </p>
-            <Button id="gamepad-r1" :disabled="maxThrottle === 100">
-                R1
-            </Button>
+            <h3>Maximale Kraftübertragung</h3>
+            <div class="throttle-buttons">
+                <Button @click="decreaseThrottle()" id="gamepad-l1" :disabled="maxThrottle === 33">
+                    L1
+                </Button>
+                <p v-if="maxThrottle === 33" class="low-speed">Low</p>
+                <p v-if="maxThrottle === 66" class="mid-speed">Mid</p>
+                <p v-if="maxThrottle === 99" class="full-speed">Full</p>
+                <Button @click="increaseThrottle()" id="gamepad-r1" :disabled="maxThrottle === 99">
+                    R1
+                </Button>
+            </div>
         </div>
 
         <div>
@@ -202,32 +232,56 @@ function addAllEventListeners() {
 }
 
 .max-throttle-control {
+    border-top: 1px solid grey;
+    border-bottom: 1px solid grey;
+    padding: 12px 22px;
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 180px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    >.throttle-buttons {
 
-    >p {
+
         display: flex;
+        flex-direction: row;
         align-items: center;
-        font-size: 20px;
-        font-weight: bold;
+        justify-content: center;
+        gap: 18px;
+        width: 100%;
+
+
+        >p {
+            min-width: 100px;
+            font-size: 18px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid transparent;
+            padding: 6px 18px;
+            border-radius: 8px;
+        }
     }
 }
 
 .low-speed {
-    border-color: green;
-    color: green;
+    border-color: green !important;
+
+    background-color: rgba(0, 128, 0, 0.523);
 }
 
 .mid-speed {
-    border-color: yellow;
-    color: yellow;
+    border-color: yellow !important;
+
+    background-color: rgba(255, 255, 0, 0.342);
 }
 
 .full-speed {
-    border-color: red;
-    color: red;
+    border-color: red !important;
+
+    background-color: rgba(255, 0, 0, 0.523);
 }
 </style>
