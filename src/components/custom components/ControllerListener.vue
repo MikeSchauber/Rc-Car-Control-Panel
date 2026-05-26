@@ -1,6 +1,9 @@
 <script lang="ts" setup>
 import { useGamepadWS } from '@/composeables/useGamepadWS'
 import { onMounted, onUnmounted, ref } from 'vue'
+import Button from '../ui/button/Button.vue'
+import { mapGamepadToXbox360Controller, useGamepad } from '@vueuse/core'
+import { computed } from 'vue'
 
 const sendetLogs = ref<string[]>([])
 const receivedLogs = ref<string[]>([])
@@ -8,6 +11,12 @@ const maxThrottle = ref<number>(100)
 
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
+
+
+
+const { isSupported, gamepads } = useGamepad()
+const gamepad = computed(() => gamepads.value.find(g => g.mapping === 'standard'))
+const controller = mapGamepadToXbox360Controller(gamepad)
 
 const { connected, sendControl, lastMessage } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
@@ -59,13 +68,20 @@ function scollToBottom() {
 }
 
 onMounted(() => {
+    addAllEventListeners()
+})
+
+onUnmounted(() => {
+    if (animationFrameId) cancelAnimationFrame(animationFrameId)
+})
+
+function addAllEventListeners() {
     window.addEventListener('gamepadconnected', (e) => {
         if (e.gamepad.index === 0) {
             gamepadIndex.value = e.gamepad.index
             animationFrameId = requestAnimationFrame(() => pollGamepad())
 
         }
-
         // console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
         // const message = `   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`
         // console.log(animationFrameId)
@@ -76,11 +92,7 @@ onMounted(() => {
         gamepadIndex.value = null
         if (animationFrameId) cancelAnimationFrame(animationFrameId)
     })
-})
-
-onUnmounted(() => {
-    if (animationFrameId) cancelAnimationFrame(animationFrameId)
-})
+}
 </script>
 
 <template>
@@ -98,22 +110,38 @@ onUnmounted(() => {
             </p>
         </div>
 
+        <div class="max-throttle-control">
+
+            <Button id="gamepad-l1" :disabled="maxThrottle === 33">
+                L1
+            </Button>
+            <p :class="maxThrottle === 33
+                ? 'low-speed'
+                : maxThrottle === 66
+                    ? 'mid-speed'
+                    : maxThrottle === 100
+                        ? 'high-speed'
+                        : ''
+                "> {{ maxThrottle }}% </p>
+            <Button id="gamepad-r1" :disabled="maxThrottle === 100">
+                R1
+            </Button>
+        </div>
+
         <div>
-            <button>down</button>
-            <p>{{ maxThrottle }} %</p>
-            <button>up</button>
+            <h2>Gesendete Werte: </h2>
+            <div class=" log-box">
+                <div v-for="(line, i) in sendetLogs" :key="i" class="log-line">{{ line }}</div>
+                <div v-if="sendetLogs.length === 0" class="empty">Keine Eingaben...</div>
+            </div>
         </div>
 
-        <h2>Gesendete Werte: </h2>
-        <div class="log-box">
-            <div v-for="(line, i) in sendetLogs" :key="i" class="log-line">{{ line }}</div>
-            <div v-if="sendetLogs.length === 0" class="empty">Keine Eingaben...</div>
-        </div>
-
-        <h2>Empfangene Werte: </h2>
-        <div class="log-box">
-            <div v-for="(line, i) in receivedLogs" :key="i" class="log-line">{{ line }}</div>
-            <div v-if="receivedLogs.length === 0" class="empty">Keine Eingaben...</div>
+        <div>
+            <h2>Empfangene Werte: </h2>
+            <div class="log-box">
+                <div v-for="(line, i) in receivedLogs" :key="i" class="log-line">{{ line }}</div>
+                <div v-if="receivedLogs.length === 0" class="empty">Keine Eingaben...</div>
+            </div>
         </div>
     </div>
 </template>
@@ -123,6 +151,9 @@ onUnmounted(() => {
     font-family: monospace;
     padding: 2rem;
     max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .status-row {
@@ -168,5 +199,35 @@ onUnmounted(() => {
 
 .empty {
     color: #444;
+}
+
+.max-throttle-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 180px;
+
+    >p {
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+        font-weight: bold;
+    }
+}
+
+.low-speed {
+    border-color: green;
+    color: green;
+}
+
+.mid-speed {
+    border-color: yellow;
+    color: yellow;
+}
+
+.full-speed {
+    border-color: red;
+    color: red;
 }
 </style>

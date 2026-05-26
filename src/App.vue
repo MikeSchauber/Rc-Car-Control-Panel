@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import ControllerListener from './components/ControllerListener.vue';
+import ControllerListener from './components/custom components/ControllerListener.vue';
+
+
 
 </script>
 
