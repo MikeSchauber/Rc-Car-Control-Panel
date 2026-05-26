@@ -2,11 +2,13 @@
 import { useGamepadWS } from '@/composeables/useGamepadWS'
 import { onMounted, onUnmounted, ref } from 'vue'
 
-const logs = ref<string[]>([])
+const sendetLogs = ref<string[]>([])
+const receivedLogs = ref<string[]>([])
+
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
 
-const { connected, sendControl } = useGamepadWS(import.meta.env.VITE_PI_URL)
+const { connected, sendControl, lastMessage } = useGamepadWS(import.meta.env.VITE_PI_URL)
 
 let lastSend = 0
 const SEND_RATE = 30 // Hz
@@ -17,9 +19,7 @@ function pollGamepad() {
     if (now - lastSend > 1000 / SEND_RATE) {
         lastSend = now
 
-
         const gp = navigator.getGamepads()[gamepadIndex.value!]
-        // console.log(gp)
         if (!gp) return
 
         let steering = gp.axes[0] ?? 0 // Linker Stick
@@ -28,14 +28,21 @@ function pollGamepad() {
 
         let throttle = 0
 
+
+
         if (reverse > 0.2) {
             throttle = -reverse
         } else {
             throttle = forward
         }
 
-        logs.value.push(`Throttle: ${Math.round(throttle * 100) / 100} || Steering: ${Math.round(steering * 100) / 100}`)
+        sendetLogs.value.push(`Throttle: ${Math.round(throttle * 100) / 100} || Steering: ${Math.round(steering * 100) / 100}`)
         scollToBottom()
+
+        if (lastMessage.value) {
+            receivedLogs.value.push(`Throttle: ${lastMessage.value.received_throttle} || Steering: ${lastMessage.value.received_steering}`)
+        }
+
 
         sendControl(steering, throttle)
     }
@@ -43,20 +50,22 @@ function pollGamepad() {
 }
 
 function scollToBottom() {
-    const logContainer = document.getElementById("logBox")
-    if (logContainer) {
-        logContainer.scrollTop = logContainer.scrollHeight;
-    }
+    const logContainers = document.querySelectorAll(".log-box")
 
+    logContainers.forEach(contaner => {
+        if (contaner) {
+            contaner.scrollTop = contaner.scrollHeight;
+        }
+    });
 }
 
 onMounted(() => {
     window.addEventListener('gamepadconnected', (e) => {
         gamepadIndex.value = e.gamepad.index
+        animationFrameId = requestAnimationFrame(() => pollGamepad())
 
         // console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
         // const message = `   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`
-        animationFrameId = requestAnimationFrame(() => pollGamepad())
         // console.log(animationFrameId)
     })
 
@@ -87,9 +96,16 @@ onUnmounted(() => {
             </p>
         </div>
 
-        <div class="log-box" id="logBox">
-            <div v-for="(line, i) in logs" :key="i" class="log-line">{{ line }}</div>
-            <div v-if="logs.length === 0" class="empty">Keine Eingaben...</div>
+        <h2>Gesendete Werte: </h2>
+        <div class="log-box" >
+            <div v-for="(line, i) in sendetLogs" :key="i" class="log-line">{{ line }}</div>
+            <div v-if="sendetLogs.length === 0" class="empty">Keine Eingaben...</div>
+        </div>
+
+        <h2>Empfangene Werte: </h2>
+        <div class="log-box" >
+            <div v-for="(line, i) in receivedLogs" :key="i" class="log-line">{{ line }}</div>
+            <div v-if="receivedLogs.length === 0" class="empty">Keine Eingaben...</div>
         </div>
     </div>
 </template>

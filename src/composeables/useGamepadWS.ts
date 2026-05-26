@@ -4,6 +4,7 @@ import { ref, onUnmounted } from 'vue'
 export function useGamepadWS(url: string) {
     const ws = ref<WebSocket | null>(null)
     const connected = ref(false)
+    const lastMessage = ref<any>(null)
 
     function connect() {
         ws.value = new WebSocket(url)
@@ -19,7 +20,16 @@ export function useGamepadWS(url: string) {
             setTimeout(connect, 2000)
         }
 
+        ws.value.onmessage = (event) => {
+            try {
+                lastMessage.value = JSON.parse(event.data)
+            } catch (e) {
+                console.error('Invalid WS response:', e)
+            }
+        }
+
         ws.value.onerror = (e) => console.error('WS Fehler:', e)
+
     }
 
     function sendControl(steering: number, throttle: number) {
@@ -31,30 +41,9 @@ export function useGamepadWS(url: string) {
         }
     }
 
-    // function response() {
-    //     if (ws.value) {
-    //         const data: any = ws.value.onmessage = (event) => {
-    //             try {
-    //                 const data = JSON.parse(event.data)
-    //                 return data
-    //             } catch (error) {
-    //                 console.error('Invalid WS response:', error)
-    //             }
-
-    //             // "status": "ok",
-    //             // "received_throttle": throttle,
-    //             // "received_steering": steering
-
-    //             return data
-    //         }
-    //         return data
-    //     }
-
-    // }
-
     connect()
     onUnmounted(() => ws.value?.close())
 
-    return { connected, sendControl }
+    return { connected, sendControl, lastMessage }
 
 }
