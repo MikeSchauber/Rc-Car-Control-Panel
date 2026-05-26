@@ -2,48 +2,54 @@ import { defineStore } from "pinia";
 
 export const useRcControl = defineStore("rcControl", {
     state: () => ({
-        maxThrottle: 33,
+        throttleIndex: 0,
+        throttleGears: [
+            33, 66, 99
+        ] as const,
         r1WasPressed: false,
         l1WasPressed: false,
     }),
-    getters: {},
+    getters: {
+        maxThrottle: (state): number => {
+            return state.throttleGears[state.throttleIndex] ?? state.throttleGears[0]
+        }
+    },
     actions: {
 
         decreaseMaxThrottle() {
-            if (this.maxThrottle > 33) {
-                this.maxThrottle = this.maxThrottle - 33
+            if (this.throttleIndex > 0) {
+                this.throttleIndex = this.throttleIndex - 1
             }
 
         },
 
         increaseMaxThrottle() {
-            if (this.maxThrottle < 99) {
-                this.maxThrottle = this.maxThrottle + 33
+            if (this.throttleIndex < this.throttleGears.length - 1) {
+                this.throttleIndex = this.throttleIndex + 1
             }
         },
 
         handleButtonL1(gp: Gamepad) {
-            const pressed = gp.buttons[4]?.pressed
+            const pressed = gp.buttons[13]?.pressed
 
-            // Nur beim ersten drücken
             if (pressed && !this.l1WasPressed) {
                 this.decreaseMaxThrottle()
             }
 
-
-                this.l1WasPressed = pressed
+            this.l1WasPressed = pressed!
         },
 
         handleButtonR1(gp: Gamepad) {
-            const pressed = gp.buttons[5]?.pressed
-
-            // Nur beim ersten drücken
+            const pressed = gp.buttons[12]?.pressed
+            
             if (pressed && !this.r1WasPressed) {
                 this.increaseMaxThrottle()
             }
-    
-                this.r1WasPressed = pressed
+
+            this.r1WasPressed = pressed!
         }
+
+
 
     },
 });

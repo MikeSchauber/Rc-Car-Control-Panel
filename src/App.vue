@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import ControllerListener from './components/custom components/ControllerListener.vue';
+
+import RcControlPage from './pages/RcControlPage.vue';
 
 
 
 </script>
 
 <template>
-  <main>
+  <div class="page-container">
 
-    <ControllerListener></ControllerListener>
+    <RcControlPage>
+    </RcControlPage>
 
-  </main>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
