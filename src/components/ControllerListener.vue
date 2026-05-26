@@ -19,14 +19,12 @@ function pollGamepad() {
 
 
         const gp = navigator.getGamepads()[gamepadIndex.value!]
-        console.log(gp)
+        // console.log(gp)
         if (!gp) return
 
-        const steering = gp.axes[0] ?? 0 // Linker Stick
+        let steering = gp.axes[0] ?? 0 // Linker Stick
         const forward = gp.buttons[7]?.value ?? 0 // R2
         const reverse = gp.buttons[6]?.value ?? 0 // L2
-
-        console.log(steering)
 
         let throttle = 0
 
@@ -36,21 +34,30 @@ function pollGamepad() {
             throttle = forward
         }
 
-        logs.value.push(`L2 value: ${throttle} | Linker Stick value: ${steering} | R2 value: ${reverse}`)
+        logs.value.push(`Throttle: ${Math.round(throttle * 100) / 100} || Steering: ${Math.round(steering * 100) / 100}`)
+        scollToBottom()
 
         sendControl(steering, throttle)
     }
     animationFrameId = requestAnimationFrame(() => pollGamepad())
 }
 
+function scollToBottom() {
+    const logContainer = document.getElementById("logBox")
+    if (logContainer) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+}
+
 onMounted(() => {
     window.addEventListener('gamepadconnected', (e) => {
         gamepadIndex.value = e.gamepad.index
 
-        console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
+        // console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
         // const message = `   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`
         animationFrameId = requestAnimationFrame(() => pollGamepad())
-        console.log(animationFrameId)
+        // console.log(animationFrameId)
     })
 
     window.addEventListener('gamepaddisconnected', (e) => {
@@ -80,7 +87,7 @@ onUnmounted(() => {
             </p>
         </div>
 
-        <div class="log-box">
+        <div class="log-box" id="logBox">
             <div v-for="(line, i) in logs" :key="i" class="log-line">{{ line }}</div>
             <div v-if="logs.length === 0" class="empty">Keine Eingaben...</div>
         </div>
