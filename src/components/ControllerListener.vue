@@ -4,6 +4,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 const sendetLogs = ref<string[]>([])
 const receivedLogs = ref<string[]>([])
+const maxThrottle = ref<number>(100)
 
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
@@ -27,8 +28,6 @@ function pollGamepad() {
         const reverse = gp.buttons[6]?.value ?? 0 // L2
 
         let throttle = 0
-
-
 
         if (reverse > 0.2) {
             throttle = -reverse
@@ -61,8 +60,11 @@ function scollToBottom() {
 
 onMounted(() => {
     window.addEventListener('gamepadconnected', (e) => {
-        gamepadIndex.value = e.gamepad.index
-        animationFrameId = requestAnimationFrame(() => pollGamepad())
+        if (e.gamepad.index === 0) {
+            gamepadIndex.value = e.gamepad.index
+            animationFrameId = requestAnimationFrame(() => pollGamepad())
+
+        }
 
         // console.log(`✅ Controller verbunden: "${e.gamepad.id}"`)
         // const message = `   Achsen: ${e.gamepad.axes.length} | Buttons: ${e.gamepad.buttons.length}`
@@ -96,14 +98,20 @@ onUnmounted(() => {
             </p>
         </div>
 
+        <div>
+            <button>down</button>
+            <p>{{ maxThrottle }} %</p>
+            <button>up</button>
+        </div>
+
         <h2>Gesendete Werte: </h2>
-        <div class="log-box" >
+        <div class="log-box">
             <div v-for="(line, i) in sendetLogs" :key="i" class="log-line">{{ line }}</div>
             <div v-if="sendetLogs.length === 0" class="empty">Keine Eingaben...</div>
         </div>
 
         <h2>Empfangene Werte: </h2>
-        <div class="log-box" >
+        <div class="log-box">
             <div v-for="(line, i) in receivedLogs" :key="i" class="log-line">{{ line }}</div>
             <div v-if="receivedLogs.length === 0" class="empty">Keine Eingaben...</div>
         </div>
