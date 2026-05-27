@@ -62,7 +62,10 @@ function pollGamepad() {
         setReactives(throttle, steering)
         buttonEventListener(gp)
         logGamepadValues(throttle, steering)
+
         sendControl(steering, throttle)
+
+        //console.log(imageSrc)
     }
     animationFrameId = requestAnimationFrame(() => pollGamepad())
 }
@@ -74,7 +77,7 @@ function setReactives(throttlePar: number, steeringPar: number) {
 }
 
 function buttonEventListener(gp: Gamepad) {
-    buttonLogger(gp)
+    // buttonLogger(gp)
     rcControlStore.handleButtonL1(gp)
     rcControlStore.handleButtonR1(gp)
 }
@@ -143,7 +146,7 @@ function addAllEventListeners() {
                 <div class="throttle-buttons">
                     <Button @click="rcControlStore.decreaseMaxThrottle()" id="gamepad-l1"
                         :disabled="maxThrottle === 33">
-                   <PanelBottomClose />
+                        <PanelBottomClose />
                     </Button>
                     <p v-if="maxThrottle === 33" class="low-speed">Low</p>
                     <p v-if="maxThrottle === 66" class="mid-speed">Mid</p>

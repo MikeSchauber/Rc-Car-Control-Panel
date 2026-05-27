@@ -21,10 +21,9 @@ export function useGamepadWS(url: string) {
         }
 
         ws.value.onmessage = (event) => {
-            try {
-                lastMessage.value = JSON.parse(event.data)
-            } catch (e) {
-                console.error('Invalid WS response:', e)
+            if (typeof event.data == "string") {
+                const data = JSON.parse(event.data)
+                lastMessage.value = data
             }
         }
 
