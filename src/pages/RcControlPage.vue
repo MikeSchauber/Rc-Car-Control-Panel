@@ -145,7 +145,7 @@ function addAllEventListeners() {
         </div>
         <div class="throttle-container">
             <div class="max-throttle-control">
-                <h3>Maximale Kraftübertragung</h3>
+                <h3>Modis</h3>
                 <div class="throttle-buttons">
                     <Button @click="rcControlStore.decreaseMaxThrottle()" id="gamepad-l1"
                         :disabled="maxThrottle === 33">

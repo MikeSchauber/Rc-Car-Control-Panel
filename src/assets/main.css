@@ -120,6 +120,8 @@
 
     body {
         @apply bg-background text-foreground;
+        background-color: rgb(16, 17, 20);
+        color: white;
     }
 }
 
