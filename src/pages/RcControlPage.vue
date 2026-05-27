@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import { useRcControl } from '@/stores/rcControlStore.ts'
 import Button from '@/components/ui/button/Button.vue'
 import { PanelBottomClose, PanelBottomOpen, PanelTopOpen } from '@lucide/vue'
+import CameraStream from '@/components/custom components/CameraStream.vue'
 
 const rcControlStore = useRcControl()
 
@@ -188,6 +189,9 @@ function addAllEventListeners() {
                     <div v-if="receivedLogs.length === 0" class="empty">Keine Eingaben...</div>
                 </div>
             </div>
+        </div>
+        <div>
+            <CameraStream></CameraStream>
         </div>
     </div>
 </template>
