@@ -140,7 +140,9 @@ function addAllEventListeners() {
                 WebSocket: {{ connected ? '🟢 verbunden' : '🔴 getrennt' }}
             </p>
         </div>
-
+        <div>
+            <CameraStream></CameraStream>
+        </div>
         <div class="throttle-container">
             <div class="max-throttle-control">
                 <h3>Maximale Kraftübertragung</h3>
@@ -190,9 +192,7 @@ function addAllEventListeners() {
                 </div>
             </div>
         </div>
-        <div>
-            <CameraStream></CameraStream>
-        </div>
+
     </div>
 </template>
 
@@ -200,7 +200,6 @@ function addAllEventListeners() {
 .main-container {
     font-family: monospace;
     padding: 2rem;
-    max-width: 800px;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -267,8 +266,8 @@ function addAllEventListeners() {
 .throttle-container {
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
-    gap: 20px;
+    justify-content: center;
+    gap: 100px;
     border-top: 1px solid grey;
     border-bottom: 1px solid grey;
     padding: 12px 22px;
