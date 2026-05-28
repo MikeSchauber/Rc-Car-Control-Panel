@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 export const useRcControl = defineStore("rcControl", {
     state: () => ({
-        throttleIndex: 0,
+        throttleIndex: 1,
         throttleGears: [
             33, 66, 99
         ] as const,
