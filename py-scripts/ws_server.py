@@ -33,6 +33,7 @@ def apply_steering(value: float):
     us = PWM_SERVO_MID + (value * 500)
     us = max(PWM_SERVO_MIN, min(PWM_SERVO_MAX, us))
     set_pwm_us(SERVO_CHANNEL, us)
+    return us
 
 def apply_throttle(value: float):
     """
@@ -55,6 +56,7 @@ def apply_throttle(value: float):
 
     us = max(PWM_FULL_REV, min(PWM_FULL_FWD, us))
     set_pwm_us(ESC_CHANNEL, us)
+    return us
 
 # Beim Start alles auf Neutral
 set_pwm_us(ESC_CHANNEL, PWM_NEUTRAL)
@@ -69,12 +71,12 @@ async def handler(ws):
                 throttle = float(data.get("throttle", 0))
                 steering = float(data.get("steering", 0))
 
+                usSteering = apply_steering(steering)
+                usThrottle = apply_throttle(throttle)
+
                 print(f"Throttle: {throttle:.2f} | Steering: {steering:.2f}")
 
-                apply_steering(steering)
-                apply_throttle(throttle)
-
-                await ws.send(getDataJson(throttle, steering))
+                await ws.send(getDataJson(usThrottle, usSteering))
 
             except Exception as e:
                 print("Error:", e)

@@ -60,6 +60,8 @@ function pollGamepad() {
             throttle = forward * (rcControlStore.maxThrottle / 100)
         }
 
+        steering = decourseSteering(steering)
+
         setReactives(throttle, steering)
         buttonEventListener(gp)
         logGamepadValues(throttle, steering)
@@ -69,6 +71,13 @@ function pollGamepad() {
         //console.log(imageSrc)
     }
     animationFrameId = requestAnimationFrame(() => pollGamepad())
+}
+
+function decourseSteering(steering: number) {
+    if (Math.abs(steering) < 0.10) {
+        return 0
+    }
+    return steering
 }
 
 function setReactives(throttlePar: number, steeringPar: number) {
@@ -235,6 +244,7 @@ function addAllEventListeners() {
     display: flex;
     flex-direction: row;
     gap: 12px;
+    max-height: 50px;
 
     >div {
         width: 100%;
@@ -248,10 +258,10 @@ function addAllEventListeners() {
     color: #0f0;
     padding: 1rem;
     border-radius: 8px;
-    height: 400px;
+    height: 100%;
     overflow-y: auto;
     font-size: 13px;
-    /* overflow: hidden; */
+     overflow: hidden; 
 }
 
 .log-line {
