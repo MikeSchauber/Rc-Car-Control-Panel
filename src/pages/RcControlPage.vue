@@ -13,6 +13,7 @@ const rcControlStore = useRcControl()
 const sendetLogs = ref<string[]>([])
 const receivedLogs = ref<string[]>([])
 const maxThrottle = computed(() => rcControlStore.throttleGears[rcControlStore.throttleIndex])
+const calibrationSteering = computed(() => rcControlStore.steeringOffset)
 
 const gamepadIndex = ref<number | null>(null)
 let animationFrameId: number | null = null
@@ -48,6 +49,8 @@ function pollGamepad() {
         let steering = gp.axes[0] ?? 0              // Linker Stick
         let forward = gp.buttons[7]?.value ?? 0   // R2
         let reverse = gp.buttons[6]?.value ?? 0   // L2
+        let calLeft = gp.buttons[14]?.value ?? 0
+        let calRight = gp.buttons[15]?.value ?? 0
         let throttle = 0
 
         if (gp.buttons[6]?.pressed) {
@@ -60,7 +63,7 @@ function pollGamepad() {
             throttle = forward * (rcControlStore.maxThrottle / 100)
         }
 
-        steering = decourseSteering(steering)
+        steering = rcControlStore.applySteeringOffset(steering)
 
         setReactives(throttle, steering)
         buttonEventListener(gp)
@@ -73,12 +76,6 @@ function pollGamepad() {
     animationFrameId = requestAnimationFrame(() => pollGamepad())
 }
 
-function decourseSteering(steering: number) {
-    if (Math.abs(steering) < 0.10) {
-        return 0
-    }
-    return steering
-}
 
 function setReactives(throttlePar: number, steeringPar: number) {
     reverse.value = -throttlePar
@@ -87,9 +84,11 @@ function setReactives(throttlePar: number, steeringPar: number) {
 }
 
 function buttonEventListener(gp: Gamepad) {
-    // buttonLogger(gp)
+    buttonLogger(gp)
     rcControlStore.handleButtonL1(gp)
     rcControlStore.handleButtonR1(gp)
+    rcControlStore.handleButtonLeft(gp)
+    rcControlStore.handleButtonRight(gp)
 }
 
 function buttonLogger(gp: Gamepad) {
@@ -170,6 +169,7 @@ function addAllEventListeners() {
                     </Button>
                 </div>
             </div>
+
             <div class="throttle-display-container">
                 <div class="bar-container">
                     <div class="bar reverse" :style="{ height: reverse * 100 + '%' }"></div>
@@ -182,6 +182,22 @@ function addAllEventListeners() {
                 <div class="steering-bar">
                     <div class="dot" :style="{ left: (steering + 1) * 50 + '%' }"></div>
                 </div>
+            </div>
+            <div class="calibration-container">
+                <h3>Lenkung Offset</h3>
+                <div class="calibration-controls">
+                    <Button @click="rcControlStore.decreaseSteeringOffset()">◀</Button>
+                    <span class="offset-value" :class="{
+                        'offset-positive': rcControlStore.steeringOffset > 0,
+                        'offset-negative': rcControlStore.steeringOffset < 0,
+                        'offset-zero': rcControlStore.steeringOffset === 0
+                    }">
+                        {{ calibrationSteering > 0 ? '+' : '' }}{{ calibrationSteering.toFixed(2) }}
+                    </span>
+                    <Button @click="rcControlStore.increaseSteeringOffset()">▶</Button>
+                </div>
+                <Button @click="rcControlStore.resetSteeringOffset()" class="reset-btn">Reset</Button>
+                <p class="calibration-hint">← → Pfeiltasten</p>
             </div>
         </div>
         <div class="logger-container">
@@ -261,7 +277,7 @@ function addAllEventListeners() {
     height: 100%;
     overflow-y: auto;
     font-size: 13px;
-     overflow: hidden; 
+    overflow: hidden;
 }
 
 .log-line {
