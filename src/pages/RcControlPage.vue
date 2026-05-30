@@ -180,24 +180,25 @@ function addAllEventListeners() {
                 </div>
 
                 <div class="steering-bar">
-                    <div class="dot" :style="{ left: (steering + 1) * 50 + '%' }"></div>
+                    <div class="dot" :style="{ left: (-steering + 1) * 50 + '%' }"></div>
                 </div>
             </div>
             <div class="calibration-container">
                 <h3>Lenkung Offset</h3>
-                <div class="calibration-controls">
-                    <Button @click="rcControlStore.decreaseSteeringOffset()">◀</Button>
-                    <span class="offset-value" :class="{
-                        'offset-positive': rcControlStore.steeringOffset > 0,
-                        'offset-negative': rcControlStore.steeringOffset < 0,
-                        'offset-zero': rcControlStore.steeringOffset === 0
-                    }">
-                        {{ calibrationSteering > 0 ? '+' : '' }}{{ calibrationSteering.toFixed(2) }}
-                    </span>
-                    <Button @click="rcControlStore.increaseSteeringOffset()">▶</Button>
+                <div class="calibration-control-container">
+                    <div class="calibration-controls">
+                        <Button @click="rcControlStore.decreaseSteeringOffset()">◀</Button>
+                        <span class="offset-value" :class="{
+                            'offset-positive': rcControlStore.steeringOffset > 0,
+                            'offset-negative': rcControlStore.steeringOffset < 0,
+                            'offset-zero': rcControlStore.steeringOffset === 0
+                        }">
+                            {{ calibrationSteering > 0 ? '+' : '' }}{{ calibrationSteering.toFixed(2) }}
+                        </span>
+                        <Button @click="rcControlStore.increaseSteeringOffset()">▶</Button>
+                    </div>
+                    <Button @click="rcControlStore.resetSteeringOffset()" class="reset-btn">Reset</Button>
                 </div>
-                <Button @click="rcControlStore.resetSteeringOffset()" class="reset-btn">Reset</Button>
-                <p class="calibration-hint">← → Pfeiltasten</p>
             </div>
         </div>
         <div class="logger-container">
@@ -381,10 +382,6 @@ function addAllEventListeners() {
     transition: left 0.05s linear;
 }
 
-
-
-
-
 .low-speed {
     border-color: green !important;
 
@@ -401,5 +398,54 @@ function addAllEventListeners() {
     border-color: red !important;
 
     background-color: rgba(255, 0, 0, 0.2);
+}
+
+.calibration-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 8px;
+}
+
+.calibration-control-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.calibration-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.offset-value {
+    min-width: 60px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: monospace;
+}
+
+.offset-positive {
+    color: #22c55e;
+}
+
+.offset-negative {
+    color: #ef4444;
+}
+
+.offset-zero {
+    color: #888;
+}
+
+.calibration-hint {
+    font-size: 11px;
+    color: #555;
+}
+
+.reset-btn {
+    font-size: 12px;
 }
 </style>
