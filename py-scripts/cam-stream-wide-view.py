@@ -7,10 +7,11 @@ app = Flask(__name__)
 
 camera = Picamera2()
 config = camera.create_video_configuration(
-    main={"size": (752, 423)},
+    main={"size": (640, 360)},
     controls={
         "FrameRate": 30,
-        "AwbEnable": 1,
+        "AwbEnable": True,
+        "AeEnable": True,
     },
     buffer_count=2
 )
@@ -22,6 +23,7 @@ camera.start()
 def generate_frames():
     while True:
         frame = camera.capture_array()
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
