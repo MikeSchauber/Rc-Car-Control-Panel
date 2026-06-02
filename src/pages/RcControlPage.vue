@@ -136,18 +136,6 @@ function addAllEventListeners() {
 
 <template>
     <div class="main-container">
-        <h1>RC-Control Webapp</h1>
-
-        <div class="status-row">
-            <p v-if="gamepadIndex === null" class="hint">
-                Controller verbinden und eine Taste drücken...
-            </p>
-            <p v-else class="connected">Controller aktiv (Index {{ gamepadIndex }})</p>
-
-            <p :class="connected ? 'ws-connected' : 'ws-disconnected'">
-                WebSocket: {{ connected ? '🟢 verbunden' : '🔴 getrennt' }}
-            </p>
-        </div>
         <div>
             <CameraStream></CameraStream>
         </div>
@@ -200,6 +188,16 @@ function addAllEventListeners() {
                     <Button @click="rcControlStore.resetSteeringOffset()" class="reset-btn">Reset</Button>
                 </div>
             </div>
+        </div>
+        <div class="status-row">
+            <p v-if="gamepadIndex === null" class="hint">
+                Controller verbinden und eine Taste drücken...
+            </p>
+            <p v-else class="connected">Controller aktiv (Index {{ gamepadIndex }})</p>
+
+            <p :class="connected ? 'ws-connected' : 'ws-disconnected'">
+                WebSocket: {{ connected ? '🟢 verbunden' : '🔴 getrennt' }}
+            </p>
         </div>
         <div class="logger-container">
             <div>
