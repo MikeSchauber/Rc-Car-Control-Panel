@@ -1,31 +1,43 @@
 import io
 from flask import Flask, Response
 from picamera2 import Picamera2
-import cv2
+from picamera2.encoders import MJPEGEncoder
+from picamera2.outputs import FileOutput
+import threading
 
 app = Flask(__name__)
 
+class StreamOutput(io.BufferedIOBase):
+    def __init__(self):
+        self.frame = None
+        self.condition = threading.Condition()
+
+    def write(self, buf):
+        with self.condition:
+            self.frame = buf
+            self.condition.notify_all()
+
 camera = Picamera2()
 config = camera.create_video_configuration(
-    main={"size": (640, 360)},
+    main={"size": (1200, 675)},
     controls={
         "FrameRate": 30,
         "AwbEnable": True,
         "AeEnable": True,
     },
-    buffer_count=2
+    buffer_count=4
 )
-# Maximalen Sensor-Bereich nutzen
-config["sensor"] = {"output_size": camera.sensor_resolution, "bit_depth": 50}
+config["sensor"] = {"output_size": camera.sensor_resolution, "bit_depth": 10}
 camera.configure(config)
-camera.start()
+
+output = StreamOutput()
+camera.start_recording(MJPEGEncoder(bitrate=10000000), FileOutput(output))
 
 def generate_frames():
     while True:
-        frame = camera.capture_array()
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
-        frame = buffer.tobytes()
+        with output.condition:
+            output.condition.wait()
+            frame = output.frame
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
