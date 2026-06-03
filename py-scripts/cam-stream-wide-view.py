@@ -19,9 +19,9 @@ class StreamOutput(io.BufferedIOBase):
 
 camera = Picamera2()
 config = camera.create_video_configuration(
-    main={"size": (1200, 675)},
+    main={"size": (854, 480)},
     controls={
-        "FrameRate": 25,
+        "FrameRate": 30,
         "AwbEnable": True,
         "AeEnable": True,
     },
@@ -31,7 +31,7 @@ config["sensor"] = {"output_size": camera.sensor_resolution, "bit_depth": 10}
 camera.configure(config)
 
 output = StreamOutput()
-camera.start_recording(MJPEGEncoder(bitrate=7500000), FileOutput(output))
+camera.start_recording(MJPEGEncoder(bitrate=5000000), FileOutput(output))
 
 def generate_frames():
     while True:
