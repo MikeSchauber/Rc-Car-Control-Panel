@@ -11,10 +11,12 @@ class StreamOutput(io.BufferedIOBase):
     def __init__(self):
         self.frame = None
         self.condition = threading.Condition()
+        self.new_frame = False
 
     def write(self, buf):
         with self.condition:
             self.frame = buf
+            self.new_frame = True
             self.condition.notify_all()
 
 camera = Picamera2()
@@ -31,13 +33,17 @@ config["sensor"] = {"output_size": camera.sensor_resolution, "bit_depth": 10}
 camera.configure(config)
 
 output = StreamOutput()
-camera.start_recording(MJPEGEncoder(bitrate=5000000), FileOutput(output))
+camera.start_recording(MJPEGEncoder(bitrate=6000000), FileOutput(output))
 
 def generate_frames():
     while True:
         with output.condition:
-            output.condition.wait()
+            # Warte max 100ms auf neues Frame, sonst skip
+            output.condition.wait(timeout=0.1)
+            if not output.new_frame or output.frame is None:
+                continue
             frame = output.frame
+            output.new_frame = False  # Als gelesen markieren
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
@@ -49,6 +55,7 @@ def video_feed():
     )
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
     return response
 
 if __name__ == '__main__':
