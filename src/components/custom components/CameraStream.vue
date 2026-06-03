@@ -11,10 +11,10 @@ const streamUrl = import.meta.env.VITE_CAMERA_STREAM
 .frame-container {
     display: flex;
     justify-content: center;
-
+ /* 854, 480 */
     >iframe {
-        width: 1200px;
-        height: 675px;
+        width: 854px;
+        height: 480px;
         border-radius: 8px;
         box-shadow: 0px 0px 16px 0px rgba(0, 0, 0, 0.648);
     }
