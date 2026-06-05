@@ -29,21 +29,21 @@ config = camera.create_video_configuration(
     },
     buffer_count=4
 )
-config["sensor"] = {"output_size": camera.sensor_resolution, "bit_depth": 10}
+config["sensor"] = {"output_size": (2304, 1296), "bit_depth": 10}
+
 camera.configure(config)
 
 output = StreamOutput()
-camera.start_recording(MJPEGEncoder(bitrate=6000000), FileOutput(output))
+camera.start_recording(MJPEGEncoder(bitrate=5000000), FileOutput(output))
 
 def generate_frames():
     while True:
         with output.condition:
-            # Warte max 100ms auf neues Frame, sonst skip
             output.condition.wait(timeout=0.1)
             if not output.new_frame or output.frame is None:
                 continue
             frame = output.frame
-            output.new_frame = False  # Als gelesen markieren
+            output.new_frame = False
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
