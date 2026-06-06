@@ -5,7 +5,7 @@ const audioStream = import.meta.env.VITE_AUDIO_STREAM
 <template>
     <div class="frame-container">
         <iframe :src="camStream" />
-        <iframe class="audio-stream" :src="audioStream"/>
+        <!-- <iframe class="audio-stream" :src="audioStream"/> -->
     </div>
 </template>
 
