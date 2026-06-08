@@ -49,6 +49,12 @@ function pollGamepad() {
         let steering = gp.axes[0] ?? 0              // Linker Stick
         let forward = gp.buttons[7]?.value ?? 0   // R2
         let reverse = gp.buttons[6]?.value ?? 0   // L2
+
+
+        const DEADZONE = 0.08
+        if (Math.abs(steering) < DEADZONE) steering = 0
+
+
         let calLeft = gp.buttons[14]?.value ?? 0
         let calRight = gp.buttons[15]?.value ?? 0
         let throttle = 0

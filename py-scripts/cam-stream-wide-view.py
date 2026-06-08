@@ -29,6 +29,8 @@ config = camera.create_video_configuration(
     },
     buffer_count=4
 )
+
+#config["sensor"] = {"output_size": (1920, 1080), "bit_depth": 10}
 config["sensor"] = {"output_size": (2304, 1296), "bit_depth": 10}
 
 camera.configure(config)
