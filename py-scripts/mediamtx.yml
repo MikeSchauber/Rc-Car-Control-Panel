@@ -1,0 +1,15 @@
+paths:
+  cam:
+    source: rpiCamera
+    rpiCameraWidth: 640
+    rpiCameraHeight: 360
+    rpiCameraFPS: 25
+    rpiCameraBitrate: 500000
+
+  cam_with_audio:
+    runOnInit: >
+      gst-launch-1.0
+      rtspclientsink name=s location=rtsp://localhost:$RTSP_PORT/cam_with_audio latency=0
+      rtspsrc location=rtsp://127.0.0.1:$RTSP_PORT/cam latency=0 ! rtph264depay ! queue ! s.
+      alsasrc device=hw:CARD=Device,DEV=0 ! queue ! audioconvert ! opusenc bitrate=8000 ! queue ! s.
+    runOnInitRestart: yes
