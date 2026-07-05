@@ -3,7 +3,7 @@ import { ref } from "vue";
 
 export const useRcControl = defineStore("rcControl", {
     state: () => ({
-        throttleIndex: 1,
+        throttleIndex: 0,
         throttleGears: [
             33, 66, 99
         ] as const,
